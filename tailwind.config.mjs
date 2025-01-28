@@ -14,4 +14,5 @@ export default {
     },
   },
   plugins: [],
+  darkMode: "class", // ensure it’s set to "class"
 };
