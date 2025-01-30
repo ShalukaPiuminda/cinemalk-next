@@ -1,49 +1,29 @@
-"use client"; // Ensures this is a client component
+import Results from '@/components/Results';
+const API_KEY = process.env.API_KEY
+export default async function Home({ searchParams = {} }) {
 
-import { useEffect, useState } from "react";
-import { useSearchParams, usePathname } from "next/navigation";
-import Results from "@/components/Results";
-
-const API_KEY = process.env.NEXT_PUBLIC_API_KEY; // Ensure you have this in .env.local
-
-export default function Home() {
-  const searchParams = useSearchParams();
-  const pathname = usePathname(); // Ensures reactivity when params change
-  const genre = searchParams.get("genre") || "fetchTrending";
-
-  const [results, setResults] = useState([]);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const url = `https://api.themoviedb.org/3${
-          genre === "fetchTopRated" ? `/movie/top_rated` : `/trending/all/week`
-        }?api_key=${API_KEY}&language=en-US&page=1`;
-
-        console.log("Fetching data from:", url); // Debugging: Ensure correct URL
-
-        const res = await fetch(url, { cache: "no-store" }); // Prevent caching issues
-        if (!res.ok) throw new Error(`Failed to fetch data: ${res.statusText}`);
-
-        const data = await res.json();
-        if (!data.results) throw new Error("No results found in API response");
-
-        setResults(data.results);
-      } catch (err) {
-        setError(err.message);
-      }
+    const genreMap = {
+      fetchTrending: '/trending/all/week',
+      fetchTopRated: '/movie/top_rated',
     };
 
-    fetchData();
-  }, [genre, pathname]); // Ensure re-fetch when URL changes
+    const genre = searchParams.genre || 'fetchTrending';
+    const endpoint = genreMap[genre] || genreMap.fetchTrending;
 
-  if (error) return <div>Error: {error}</div>;
+    const res = await fetch(
+      `https://api.themoviedb.org/3${endpoint}?api_key=${API_KEY}&language=en-US&page=1`,
+      { next: { revalidate: 10000 } }
+    );
 
-  return (
-    <div>
-      <h1>{genre === "fetchTopRated" ? "Top Rated" : "Trending"}</h1>
-      <Results results={results} />
-    </div>
-  );
+    if (!res.ok) {
+      throw new Error(`Failed to fetch data`);
+    }
+
+    const data = await res.json();
+    return (
+      <div>
+        <Results results={data.results} />
+      </div>
+    );
+ 
 }
