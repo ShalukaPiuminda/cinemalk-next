@@ -1,6 +1,7 @@
+
 import Results from '@/components/Results';
 const API_KEY = process.env.API_KEY
-export default async function Home({ searchParams = {} }) {
+export default async function Home({ searchParams }) {
 
     const genreMap = {
       fetchTrending: '/trending/all/week',
@@ -15,14 +16,16 @@ export default async function Home({ searchParams = {} }) {
       { next: { revalidate: 10000 } }
     );
 
-    if (!res.ok) {
-      throw new Error(`Failed to fetch data`);
-    }
-
     const data = await res.json();
+    if (!res.ok) {
+      throw new Error('Failed to fetch data');
+    }
+    const results=data.results;
+
+    
     return (
       <div>
-        <Results results={data.results} />
+        <Results results={results} />
       </div>
     );
  
